@@ -12,7 +12,7 @@ public class MockInputReader implements InputReader {
     }
 
     @Override
-    public String nextLine() {
+    public String readLine() {
         return answers[pointer++];
     }
 

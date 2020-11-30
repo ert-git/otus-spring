@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import ru.otus.levina.hw01.domain.Answer;
 import ru.otus.levina.hw01.domain.Question;
 import ru.otus.levina.hw01.input.AnswerReader;
-import ru.otus.levina.hw01.input.InputReader;
 import ru.otus.levina.hw01.output.UserOutput;
 import ru.otus.levina.hw01.sources.QuestionsSource;
 import ru.otus.levina.hw01.sources.QuestionsSourceException;
@@ -12,7 +11,7 @@ import ru.otus.levina.hw01.sources.QuestionsSourceException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ru.otus.levina.hw01.core.Messages.*;
+import static ru.otus.levina.hw01.core.Messages.INFO_RESULT;
 
 @Slf4j
 public class TesterServiceImpl {
@@ -32,15 +31,12 @@ public class TesterServiceImpl {
             log.info("start testing");
             List<Question> questions = questionsReader.loadQuestions();
             List<Answer> answers = new ArrayList<>();
-            int correctCount = 0;
             for (int i = 0; i < questions.size(); i++) {
                 Question question = questions.get(i);
                 userOutput.printQuestion(question, i);
-                Answer answer = answerReader.readAnswer(question);
-                answers.add(answer);
-                if (answer.isCorrect()) correctCount++;
-            }
-            userOutput.printInfo(INFO_RESULT + correctCount);
+                answers.add(answerReader.readAnswer(question));
+             }
+            userOutput.printResult(answers);
             return answers;
         } catch (QuestionsSourceException e) {
             throw new TesterServiceException(e);

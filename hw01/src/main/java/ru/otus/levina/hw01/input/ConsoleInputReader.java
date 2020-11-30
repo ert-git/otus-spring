@@ -4,15 +4,15 @@ import java.util.Scanner;
 
 public class ConsoleInputReader implements InputReader {
 
-	private final Scanner scanner = new Scanner(System.in);
+    private final Scanner scanner = new Scanner(System.in);
 
-	@Override
-	public String nextLine() {
-		return scanner.nextLine();
-	}
+    @Override
+    public String readLine() {
+        return scanner.nextLine();
+    }
 
-	@Override
-	public void close() {
-		scanner.close();
-	}
+    @Override
+    public void close() {
+        scanner.close();
+    }
 }

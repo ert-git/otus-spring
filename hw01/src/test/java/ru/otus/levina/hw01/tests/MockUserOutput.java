@@ -1,6 +1,7 @@
 package ru.otus.levina.hw01.tests;
 
 import lombok.Getter;
+import ru.otus.levina.hw01.domain.Answer;
 import ru.otus.levina.hw01.domain.Question;
 import ru.otus.levina.hw01.output.UserOutput;
 
@@ -13,19 +14,18 @@ public class MockUserOutput implements UserOutput {
     @Getter
     private final List<String> errors = new ArrayList<>();
     @Getter
-    private final List<String> infos = new ArrayList<>();
+    private final List<Answer> answers = new ArrayList<>();
 
     @Override
     public void printQuestion(Question question, int i) {
         this.questions.add(question.toString());
     }
-
     @Override
     public void printError(String msg) {
         this.errors.add(msg);
     }
     @Override
-    public void printInfo(String msg) {
-        this.infos.add(msg);
+    public void printResult(List<Answer> answers) {
+        this.answers.addAll(answers);
     }
 }

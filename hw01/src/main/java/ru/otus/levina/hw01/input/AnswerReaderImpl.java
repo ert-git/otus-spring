@@ -17,10 +17,10 @@ public class AnswerReaderImpl implements AnswerReader {
 
     @Override
     public Answer readAnswer(Question question) {
-        String userinput = inputReader.nextLine();
+        String userinput = inputReader.readLine();
         while (userinput.isEmpty()) {
             userOutput.printError(ERROR_EMPTY_INPUT);
-            userinput = inputReader.nextLine();
+            userinput = inputReader.readLine();
         }
         return new Answer(question, userinput);
     }
