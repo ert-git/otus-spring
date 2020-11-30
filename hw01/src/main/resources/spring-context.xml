@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="questionsReader" class="ru.otus.levina.hw01.sources.CsvQuestionsSourceReader">
+        <constructor-arg name="csvResourceName" value="questions.csv"/>
+    </bean>
+
+    <bean id="inputReader" class="ru.otus.levina.hw01.input.ConsoleInputReader"/>
+    <bean id="userOutput" class="ru.otus.levina.hw01.output.UserOutputImpl"/>
+    <bean id="answerReader" class="ru.otus.levina.hw01.input.AnswerReaderImpl">
+        <constructor-arg name="inputReader" ref="inputReader"/>
+        <constructor-arg name="userOutput" ref="userOutput"/>
+    </bean>
+
+    <bean id="applicationService" class="ru.otus.levina.hw01.core.TesterServiceImpl">
+        <constructor-arg name="questionsReader" ref="questionsReader"/>
+        <constructor-arg name="answerReader" ref="answerReader"/>
+        <constructor-arg name="userOutput" ref="userOutput"/>
+    </bean>
+</beans>
