@@ -1,0 +1,7 @@
+app:
+  persentToPass: 80
+  locale: ru_RU
+  csvResourceName: questions
+spring:
+  messages:
+    basename: messages.bundle
