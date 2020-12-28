@@ -6,9 +6,10 @@ import ru.otus.levina.hw02.domain.Answer;
 import ru.otus.levina.hw02.domain.Person;
 import ru.otus.levina.hw02.domain.Question;
 import ru.otus.levina.hw02.domain.TestResult;
-import ru.otus.levina.hw02.services.io.UserIO;
 import ru.otus.levina.hw02.repository.QuestionsRepository;
 import ru.otus.levina.hw02.repository.QuestionsRepositoryException;
+import ru.otus.levina.hw02.services.io.TesterServiceIO;
+import ru.otus.levina.hw02.services.io.UserIO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,13 +18,15 @@ import java.util.List;
 public class TesterServiceImpl implements TesterService {
 
     private final QuestionsRepository questionsRepo;
-    private final UserIO io;
+    private final TesterServiceIO io;
     private final float percentToPass;
+    private final PersonService personService;
 
-    public TesterServiceImpl(QuestionsRepository questionsReader, UserIO io, float percentToPass) {
+    public TesterServiceImpl(QuestionsRepository questionsReader, TesterServiceIO io, float percentToPass, PersonService personService) {
         this.questionsRepo = questionsReader;
         this.io = io;
         this.percentToPass = percentToPass;
+        this.personService = personService;
     }
 
     @Override
@@ -42,9 +45,9 @@ public class TesterServiceImpl implements TesterService {
         }
     }
 
-    private boolean isPassed( List<Answer> answers) {
+    private boolean isPassed(List<Answer> answers) {
         return
-                100 * answers.stream().filter(a -> a.isCorrect()).count() / answers.size() >= percentToPass;
+                answers.size() > 0 && 100 * answers.stream().filter(a -> a.isCorrect()).count() / answers.size() >= percentToPass;
     }
 
     private List<Answer> readAnswers() throws QuestionsRepositoryException {
@@ -54,17 +57,17 @@ public class TesterServiceImpl implements TesterService {
             Question question = questions.get(i);
             io.printQuestion(question);
             answers.add(io.readAnswer(question));
-         }
+        }
         return answers;
     }
 
     private Person readPerson() {
-        Question fnq =  new Question(0, Messages.PERSON_FIRSTNAME_QUESTION);
+        Question fnq = new Question(0, Messages.PERSON_FIRSTNAME_QUESTION);
         io.printQuestion(fnq);
         Answer fna = io.readAnswer(fnq);
-        Question lnq =  new Question(0, Messages.PERSON_LASTTNAME_QUESTION);
+        Question lnq = new Question(0, Messages.PERSON_LASTTNAME_QUESTION);
         io.printQuestion(lnq);
         Answer lna = io.readAnswer(lnq);
-        return new Person(fna.getAnswer(),lna.getAnswer());
+        return new Person(fna.getAnswer(), lna.getAnswer());
     }
 }

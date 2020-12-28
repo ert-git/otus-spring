@@ -6,7 +6,7 @@ import ru.otus.levina.hw02.domain.TestResult;
 import static ru.otus.levina.hw02.common.Messages.*;
 
 
-public class ConsoleMessageFormatter implements MessageFormatter {
+public class MessageFormatterImpl implements MessageFormatter {
 
     @Override
     public String formatQuestion(Question question) {

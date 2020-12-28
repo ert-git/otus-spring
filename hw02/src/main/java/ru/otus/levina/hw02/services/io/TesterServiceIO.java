@@ -12,22 +12,8 @@ import java.util.Scanner;
 
 import static ru.otus.levina.hw02.common.Messages.ERROR_EMPTY_INPUT;
 
-public class UserIOImpl implements UserIO {
-    private final Scanner in;
-    private final PrintStream out;
-
-    public UserIOImpl(InputStream in, OutputStream out) {
-        this.in = new Scanner(in);
-        this.out = new PrintStream(out);
-    }
-
-    @Override
-    public void print(String msg) {
-        out.println(msg);
-    }
-
-    @Override
-    public String read() {
-        return in.nextLine();
-    }
+public interface TesterServiceIO {
+     void printQuestion(Question q);
+     Answer readAnswer(Question question) ;
+     void printResult(TestResult result);
 }
