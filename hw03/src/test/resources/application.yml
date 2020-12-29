@@ -5,6 +5,3 @@ app:
 spring:
   messages:
     basename: messages.bundle
-  shell:
-    interactive:
-      enabled: false
