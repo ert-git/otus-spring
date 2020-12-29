@@ -1,7 +1,10 @@
 app:
   persentToPass: 80
-  locale: ru_RU
+  locale: en_US
   csvResourceName: questions
 spring:
   messages:
     basename: messages.bundle
+  shell:
+    interactive:
+      enabled: false
