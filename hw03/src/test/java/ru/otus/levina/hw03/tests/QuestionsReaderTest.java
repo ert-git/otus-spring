@@ -29,7 +29,6 @@ class QuestionsReaderTest {
         assertEquals(NUMBER_OF_QUESTIONS, questions.size());
         assertEquals(NUMBER_OF_CHOICES_Q1, questions.get(0).getChoices().size());
         assertEquals(NUMBER_OF_CHOICES_Q2, questions.get(1).getChoices().size());
-        System.out.println(questions.get(2).getChoices());
         assertEquals(NUMBER_OF_CHOICES_Q3, questions.get(2).getChoices().size());
         assertEquals(NUMBER_OF_CHOICES_Q4, questions.get(3).getChoices().size());
         assertEquals(NUMBER_OF_CHOICES_Q5, questions.get(4).getChoices().size());
