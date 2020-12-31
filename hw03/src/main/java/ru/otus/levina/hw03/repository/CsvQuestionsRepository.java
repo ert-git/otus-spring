@@ -4,12 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import ru.otus.levina.hw03.config.AppProperties;
 import ru.otus.levina.hw03.domain.Question;
-import ru.otus.levina.hw03.services.core.MessageService;
-import ru.otus.levina.hw03.services.formatters.MessageFormatter;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -26,12 +23,11 @@ public class CsvQuestionsRepository implements QuestionsRepository {
     private final String csvResourceName;
 
     public CsvQuestionsRepository(AppProperties props) {
-        String s = props.getCsvResourceName();
-        this.csvResourceName = String.format("%s_%s.csv", props.getCsvResourceName(), props.getLocale());
+        this.csvResourceName = props.getCsvResourceName();
     }
 
     @Override
-    public List<Question> loadQuestions() throws QuestionsRepositoryException {
+    public List<Question> getQuestions() throws QuestionsRepositoryException {
         log.debug("loadQuestions {}", csvResourceName);
         List<Question> questions = new ArrayList<>();
         try (InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(csvResourceName)) {

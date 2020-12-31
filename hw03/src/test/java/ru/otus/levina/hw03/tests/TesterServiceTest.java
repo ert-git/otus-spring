@@ -1,63 +1,65 @@
 package ru.otus.levina.hw03.tests;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.otus.levina.hw03.config.AppProperties;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.TestPropertySource;
+import ru.otus.levina.hw03.domain.Answer;
 import ru.otus.levina.hw03.domain.Person;
+import ru.otus.levina.hw03.domain.Question;
 import ru.otus.levina.hw03.domain.TestResult;
-import ru.otus.levina.hw03.repository.CsvQuestionsRepository;
 import ru.otus.levina.hw03.repository.QuestionsRepository;
 import ru.otus.levina.hw03.services.core.TesterService;
-import ru.otus.levina.hw03.services.core.TesterServiceImpl;
-import ru.otus.levina.hw03.services.formatters.MessageFormatter;
 import ru.otus.levina.hw03.services.io.TesterServiceIO;
-import ru.otus.levina.hw03.services.io.TesterServiceIOImpl;
 import ru.otus.levina.hw03.services.io.UserIO;
-import ru.otus.levina.hw03.services.io.UserIOImpl;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Locale;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.when;
+
 
 @SpringBootTest
+@TestPropertySource(properties = "app.percentToPass=60")
 class TesterServiceTest {
     private static final Person testPerson = new Person("testfn", "testln");
+
+    @MockBean
+    private QuestionsRepository qrepo;
+    @MockBean
+    private TesterServiceIO tsio;
     @Autowired
-    private MessageFormatter formatter;
-    @Mock
-    private AppProperties appProps;
+    private TesterService testerService;
 
-    private TesterService configureTesterService(int percent) throws Exception {
-        given(appProps.getPercentToPass()).willReturn(percent);
-        given(appProps.getCsvResourceName()).willReturn("questions");
-        given(appProps.getLocale()).willReturn(Locale.US);
+    private static List<Question> questions = Arrays.asList(new Question[]{
+            new Question(1, "test q1", "1"),
+            new Question(2, "test q2", "2"),
+            new Question(3, "test q3", "3"),
+            new Question(4, "test q4", "4")
+    });
 
-        byte[] bytes = String.join("\n", new String[]{
-                "7", "12", "c", "0", "green"}).getBytes();
-        ByteArrayInputStream in = new ByteArrayInputStream(bytes);
-        QuestionsRepository qrepo = new CsvQuestionsRepository(appProps);
-        UserIO io = new UserIOImpl(in, System.out);
-        TesterServiceIO tsio = new TesterServiceIOImpl(io, formatter);
-        return new TesterServiceImpl(qrepo, tsio, appProps);
-    }
 
     @Test
     void testTestPassed() throws Exception {
-        TesterService testerService = configureTesterService(40);
+        given(qrepo.getQuestions()).willReturn(questions);
+        given(tsio.getAnswer(questions.get(0))).willReturn(new Answer(questions.get(0), "1"));
+        given(tsio.getAnswer(questions.get(1))).willReturn(new Answer(questions.get(1), "2"));
+        given(tsio.getAnswer(questions.get(2))).willReturn(new Answer(questions.get(2), "3"));
+        given(tsio.getAnswer(questions.get(3))).willReturn(new Answer(questions.get(3), "wrong"));
         TestResult result = testerService.executeTest(testPerson);
         assertTrue(result.isPassed());
     }
 
     @Test
     void testTestFailed() throws Exception {
-        TesterService testerService = configureTesterService(80);
+        given(qrepo.getQuestions()).willReturn(questions);
+        given(tsio.getAnswer(questions.get(0))).willReturn(new Answer(questions.get(0), "1"));
+        given(tsio.getAnswer(questions.get(1))).willReturn(new Answer(questions.get(1), "2"));
+        given(tsio.getAnswer(questions.get(2))).willReturn(new Answer(questions.get(2), "wrong"));
+        given(tsio.getAnswer(questions.get(3))).willReturn(new Answer(questions.get(3), "wrong"));
         TestResult result = testerService.executeTest(testPerson);
         assertFalse(result.isPassed());
     }

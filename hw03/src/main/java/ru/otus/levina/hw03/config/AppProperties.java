@@ -10,7 +10,7 @@ import java.util.Locale;
 @ConfigurationProperties(prefix = "app")
 @Data
 public class AppProperties {
-    private int percentToPass;
+    private float percentToPass;
     private Locale locale;
     private String csvResourceName;
 }

@@ -5,5 +5,5 @@ import ru.otus.levina.hw03.domain.Question;
 import java.util.List;
 
 public interface QuestionsRepository {
-	List<Question> loadQuestions() throws QuestionsRepositoryException;
+	List<Question> getQuestions() throws QuestionsRepositoryException;
 }

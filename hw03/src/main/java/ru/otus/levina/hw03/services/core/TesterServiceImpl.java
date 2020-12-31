@@ -8,11 +8,11 @@ import ru.otus.levina.hw03.domain.Person;
 import ru.otus.levina.hw03.domain.Question;
 import ru.otus.levina.hw03.domain.TestResult;
 import ru.otus.levina.hw03.repository.QuestionsRepository;
-import ru.otus.levina.hw03.repository.QuestionsRepositoryException;
 import ru.otus.levina.hw03.services.io.TesterServiceIO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -31,9 +31,11 @@ public class TesterServiceImpl implements TesterService {
 
     @Override
     public TestResult executeTest(Person person) throws TesterServiceException {
-        log.info("start testing: percentToPass={}", percentToPass);
+        log.info("executeTest: start testing, percentToPass={}", percentToPass);
         try {
-            List<Answer> answers = readAnswers();
+            List<Question> questions = questionsRepo.getQuestions();
+            log.info("executeTest: questions size={}", questions.size());
+            List<Answer> answers =  questions.stream().map(q -> io.getAnswer(q)).collect(Collectors.toList());
             TestResult result = new TestResult(person, answers, isPassed(answers));
             io.printResult(result);
             return result;
@@ -47,17 +49,6 @@ public class TesterServiceImpl implements TesterService {
     private boolean isPassed(List<Answer> answers) {
         return
                 answers.size() > 0 && 100 * answers.stream().filter(a -> a.isCorrect()).count() / answers.size() >= percentToPass;
-    }
-
-    private List<Answer> readAnswers() throws QuestionsRepositoryException {
-        List<Question> questions = questionsRepo.loadQuestions();
-        List<Answer> answers = new ArrayList<>();
-        for (int i = 0; i < questions.size(); i++) {
-            Question question = questions.get(i);
-            io.printQuestion(question);
-            answers.add(io.readAnswer(question));
-        }
-        return answers;
     }
 
 }

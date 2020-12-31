@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.otus.levina.hw03.common.Messages;
 import ru.otus.levina.hw03.domain.Person;
 import ru.otus.levina.hw03.services.io.UserIO;
+import ru.otus.levina.hw03.services.io.UserIOFacade;
 
 import static ru.otus.levina.hw03.common.Messages.ERROR_EMPTY_INPUT;
 
@@ -14,25 +15,15 @@ import static ru.otus.levina.hw03.common.Messages.ERROR_EMPTY_INPUT;
 @Service
 public class PersonServiceImpl implements PersonService {
 
-    private final UserIO io;
-    private final MessageService messageService;
+    private final UserIOFacade io;
 
     @Override
     public Person readPerson() {
         return new Person(
-                readAnswer(messageService.getMessage(Messages.PERSON_FIRSTNAME_QUESTION)),
-                readAnswer(messageService.getMessage(Messages.PERSON_LASTTNAME_QUESTION)));
+                io.readNotEmptyString(Messages.PERSON_FIRSTNAME_QUESTION, ERROR_EMPTY_INPUT),
+                io.readNotEmptyString(Messages.PERSON_LASTTNAME_QUESTION, ERROR_EMPTY_INPUT));
     }
 
-    public String readAnswer(String question) {
-        io.print(question);
-        String userinput = io.read();
-        while (userinput.isEmpty()) {
-            io.print(messageService.getMessage(ERROR_EMPTY_INPUT));
-            io.print(question);
-            userinput = io.read();
-        }
-        return userinput;
-    }
+
 
 }

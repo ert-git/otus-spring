@@ -1,5 +1,6 @@
 package ru.otus.levina.hw03.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import java.util.Set;
 
 @Data
 @RequiredArgsConstructor
+@AllArgsConstructor
 public class Question {
     @NonNull
     private final int id;

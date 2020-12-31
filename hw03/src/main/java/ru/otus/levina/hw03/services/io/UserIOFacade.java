@@ -4,7 +4,8 @@ import ru.otus.levina.hw03.domain.Answer;
 import ru.otus.levina.hw03.domain.Question;
 import ru.otus.levina.hw03.domain.TestResult;
 
-public interface TesterServiceIO {
-     Answer getAnswer(Question question) ;
-     void printResult(TestResult result);
+public interface UserIOFacade {
+     String readNotEmptyString(String prompt, String errorInputMessage);
+
+     void print(String msg);
 }

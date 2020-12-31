@@ -1,6 +1,5 @@
 package ru.otus.levina.hw03.services.core;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import ru.otus.levina.hw03.config.AppProperties;
