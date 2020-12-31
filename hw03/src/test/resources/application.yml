@@ -1,7 +1,0 @@
-app:
-  percentToPass: 40
-  locale: ru_RU
-  csvResourceName: questions_ru_RU.csv
-spring:
-  messages:
-    basename: messages.bundle

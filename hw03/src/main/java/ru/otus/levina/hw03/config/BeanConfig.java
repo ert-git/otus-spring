@@ -17,8 +17,6 @@ import ru.otus.levina.hw03.services.io.UserIOImpl;
 
 @Configuration
 public class BeanConfig {
-    @Autowired
-    private MessageService messageService;
 
     @Bean
     public UserIO userIO() {
