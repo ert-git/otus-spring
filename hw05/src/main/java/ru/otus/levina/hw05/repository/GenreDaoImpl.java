@@ -23,11 +23,6 @@ public class GenreDaoImpl implements GenreDao {
 
     public static final String NAME = "name";
     public static final String ID = "id";
-    public static final String SELECT_BY_ID_SQL = String.format("select %s, %s, from genres where %s = :%s", ID, NAME, ID, ID);
-    public static final String SELECT_ALL_SQL = String.format("select %s, %s, from genres order by %s", ID, NAME, NAME);
-    public static final String INSERT_SQL = String.format("insert into genres (%s) values (:%s)", NAME, NAME);
-    public static final String DELETE_BY_ID = String.format("delete from genres where %s = :%s", ID, ID);
-    public static final String UPDATE_SQL = String.format("update genres set %s=:%s where %s = :%s", NAME, NAME, ID, ID);
 
     private final NamedParameterJdbcOperations jdbc;
     private final RowMapper<Genre> rowMapper =
@@ -37,16 +32,16 @@ public class GenreDaoImpl implements GenreDao {
     @Override
     public Optional<Genre> getById(long id) {
         try {
-            return Optional.ofNullable(jdbc.queryForObject(SELECT_BY_ID_SQL, Collections.singletonMap(ID, id), rowMapper));
+            return Optional.ofNullable(jdbc.queryForObject("select id, name, from genres where id = :id", Collections.singletonMap(ID, id), rowMapper));
         } catch (EmptyResultDataAccessException e) {
             log.debug("getById: {} for id={}", e, id);
-            return Optional.ofNullable(null);
+            return Optional.empty();
         }
     }
 
     @Override
     public List<Genre> getAll() {
-        return jdbc.query(SELECT_ALL_SQL, rowMapper);
+        return jdbc.query("select id, name, from genres order by name", rowMapper);
     }
 
     @Override
@@ -55,7 +50,7 @@ public class GenreDaoImpl implements GenreDao {
         SqlParameterSource namedParameters = new MapSqlParameterSource()
                 .addValue(NAME, genre.getName());
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(INSERT_SQL, namedParameters, keyHolder);
+        jdbc.update("insert into genres (name) values (:name)", namedParameters, keyHolder);
         Long id = (Long) keyHolder.getKey();
         genre.setId(id);
         log.info("insert: inserted genre={}", genre);
@@ -64,7 +59,7 @@ public class GenreDaoImpl implements GenreDao {
 
     @Override
     public void delete(Genre genre) {
-        jdbc.update(DELETE_BY_ID, Collections.singletonMap(ID, genre.getId()));
+        jdbc.update("delete from genres where id = :id", Collections.singletonMap(ID, genre.getId()));
     }
 
     @Override
@@ -72,11 +67,35 @@ public class GenreDaoImpl implements GenreDao {
         SqlParameterSource namedParameters = new MapSqlParameterSource()
                 .addValue(NAME, genre.getName())
                 .addValue(ID, genre.getId());
-        jdbc.update(UPDATE_SQL, namedParameters);
+        jdbc.update("update genres set name=:name where id = :id", namedParameters);
     }
 
     @Override
     public List<Genre> getByIdList(List<Long> idList) {
-        return idList.stream().map(id -> getById(id).orElse(null)).filter(Objects::nonNull).collect(Collectors.toList());
+        log.debug("getById: idList={}", idList);
+        SqlParameterSource params = new MapSqlParameterSource("idList", idList);
+        return jdbc.query("select id, name from genres where id in (:idList)", params, rowMapper);
     }
+
+    @Override
+    public List<Genre> getByBookId(long bookId) {
+        log.debug("getByBookId: bookId={}", bookId);
+        SqlParameterSource params = new MapSqlParameterSource("bookId", bookId);
+        return jdbc.query("select g.id as id, name from genres g join book_genre on g.id = genre_id where book_id = :bookId", params, rowMapper);
+    }
+
+    @Override
+    public  Map<Long, List<Genre>> getByBookIdList(List<Long> bookIds) {
+        log.debug("getByBookIdList: bookIds={}", bookIds);
+        SqlParameterSource params = new MapSqlParameterSource("idList", bookIds);
+        Map<Long, List<Genre>> plainResult = new HashMap<>();
+        jdbc.query("select a.id as id, name, book_id from genres a join book_genre on a.id = genre_id where book_id in (:idList)", params, rs -> {
+            Genre author = rowMapper.mapRow(rs, 0);
+            long bookId = rs.getLong("book_id");
+            plainResult.putIfAbsent(bookId, new ArrayList<>());
+            plainResult.get(bookId).add(author);
+        });
+        return plainResult;
+    }
+
 }

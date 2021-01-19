@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 import ru.otus.levina.hw05.domain.Author;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -24,15 +23,6 @@ public class AuthorDaoImpl implements AuthorDao {
     public static final String LAST_NAME = "last_name";
     public static final String MIDDLE_NAME = "middle_name";
     public static final String ID = "id";
-    public static final String SELECT_BY_ID_SQL = String.format("select %s, %s, %s, %s from authors where %s = :%s",
-            ID, FIRST_NAME, LAST_NAME, MIDDLE_NAME, ID, ID);
-    public static final String SELECT_ALL_SQL = String.format("select %s, %s, %s, %s from authors order by %s",
-            ID, FIRST_NAME, LAST_NAME, MIDDLE_NAME, LAST_NAME);
-    public static final String INSERT_SQL = String.format("insert into authors (%s, %s, %s) values (:%s, :%s, :%s)",
-            FIRST_NAME, LAST_NAME, MIDDLE_NAME, FIRST_NAME, LAST_NAME, MIDDLE_NAME);
-    public static final String DELETE_BY_ID = String.format("delete from authors where %s = :%s", ID, ID);
-    public static final String UPDATE_SQL = String.format("update authors set %s=:%s, %s=:%s, %s=:%s where %s = :%s",
-            FIRST_NAME, LAST_NAME, MIDDLE_NAME, FIRST_NAME, LAST_NAME, MIDDLE_NAME, ID, ID);
 
     private final NamedParameterJdbcOperations jdbc;
     private final RowMapper<Author> rowMapper =
@@ -46,16 +36,16 @@ public class AuthorDaoImpl implements AuthorDao {
         Map<String, Object> params = Collections.singletonMap(ID, id);
         try {
             return Optional.ofNullable(jdbc
-                    .queryForObject(SELECT_BY_ID_SQL, params, rowMapper));
+                    .queryForObject("select id, first_name, last_name, middle_name from authors where id = :id", params, rowMapper));
         } catch (EmptyResultDataAccessException e) {
             log.debug("getById: {} for id={}", e, id);
-            return Optional.ofNullable(null);
+            return Optional.empty();
         }
     }
 
     @Override
     public List<Author> getAll() {
-        return jdbc.query(SELECT_ALL_SQL, rowMapper);
+        return jdbc.query("select id, first_name, last_name, middle_name from authors order by last_name", rowMapper);
     }
 
     @Override
@@ -66,7 +56,7 @@ public class AuthorDaoImpl implements AuthorDao {
                 .addValue(LAST_NAME, author.getLastName())
                 .addValue(MIDDLE_NAME, author.getMiddleName());
         jdbc
-                .update(INSERT_SQL, params, keyHolder);
+                .update("insert into authors (first_name, last_name, middle_name) values (:first_name, :last_name, :middle_name)", params, keyHolder);
         Long id = (Long) keyHolder.getKey();
         author.setId(id);
         return getById(id);
@@ -74,7 +64,7 @@ public class AuthorDaoImpl implements AuthorDao {
 
     @Override
     public void delete(Author author) {
-        jdbc.update(DELETE_BY_ID, Collections.singletonMap(ID, author.getId()));
+        jdbc.update("delete from authors where id = :id", Collections.singletonMap(ID, author.getId()));
     }
 
     @Override
@@ -84,13 +74,34 @@ public class AuthorDaoImpl implements AuthorDao {
                 .addValue(FIRST_NAME, author.getFirstName())
                 .addValue(LAST_NAME, author.getLastName())
                 .addValue(MIDDLE_NAME, author.getMiddleName());
-        jdbc.update(UPDATE_SQL, params);
+        jdbc.update("update authors set first_name=:first_name, last_name=:last_name, middle_name=:middle_name where id = :id", params);
     }
 
     @Override
     public List<Author> getByIdList(List<Long> idList) {
         log.debug("getById: idList={}", idList);
-        return idList.stream().map(id -> getById(id).orElse(null)).filter(Objects::nonNull).collect(Collectors.toList());
+        SqlParameterSource params = new MapSqlParameterSource("idList", idList);
+        return jdbc.query("select id, first_name, last_name, middle_name from authors where id in (:idList)", params, rowMapper);
     }
 
+    @Override
+    public List<Author> getByBookId(long bookId) {
+        log.debug("getByBookId: bookId={}", bookId);
+        SqlParameterSource params = new MapSqlParameterSource("bookId", bookId);
+        return jdbc.query("select a.id as id, first_name, last_name, middle_name from authors a join book_author on a.id = author_id where book_id = :bookId", params, rowMapper);
+    }
+
+    @Override
+    public  Map<Long, List<Author>> getByBookIdList(List<Long> bookIds) {
+        log.debug("getByBookIdList: bookIds={}", bookIds);
+        SqlParameterSource params = new MapSqlParameterSource("idList", bookIds);
+        Map<Long, List<Author>> plainResult = new HashMap<>();
+        jdbc.query("select a.id as id, first_name, last_name, middle_name, book_id from authors a join book_author on a.id = author_id where book_id in (:idList)", params, rs -> {
+            Author author = rowMapper.mapRow(rs, 0);
+            long bookId = rs.getLong("book_id");
+            plainResult.putIfAbsent(bookId, new ArrayList<>());
+            plainResult.get(bookId).add(author);
+        });
+        return plainResult;
+    }
 }

@@ -9,7 +9,7 @@ import ru.otus.levina.hw05.repository.AuthorDao;
 import ru.otus.levina.hw05.repository.BookDao;
 import ru.otus.levina.hw05.repository.GenreDao;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 @Service
@@ -24,7 +24,7 @@ public class BookServiceImpl implements BookService {
     public Optional<Book> insert(String title, long authorId, long genreId) {
         Author author = authorDao.getById(authorId).orElseThrow();
         Genre genre = genreDao.getById(genreId).orElseThrow();
-        return bookDao.insert(new Book(title, Arrays.asList(new Author[]{author}), Arrays.asList(new Genre[]{genre})));
+        return bookDao.insert(new Book(title, Collections.singletonList(author), Collections.singletonList(genre)));
     }
 
 
@@ -39,7 +39,7 @@ public class BookServiceImpl implements BookService {
     public void addAuthor(long bookId, long authorId) {
         Book book = bookDao.getById(bookId).orElseThrow();
         Author author = authorDao.getById(authorId).orElseThrow();
-        if (!book.getAuthors().stream().filter(a -> a.getId() == authorId).findFirst().isPresent()) {
+        if (book.getAuthors().stream().noneMatch(a -> a.getId() == authorId)) {
             book.getAuthors().add(author);
         }
         bookDao.update(book);

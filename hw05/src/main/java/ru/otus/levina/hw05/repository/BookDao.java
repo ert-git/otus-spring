@@ -13,6 +13,8 @@ public interface BookDao {
 
     void delete(Book book);
 
+    List<Book> getByPage(int startRowNum, int countRows);
+
     Optional<Book> insert(Book book);
 
     void update(Book book);
