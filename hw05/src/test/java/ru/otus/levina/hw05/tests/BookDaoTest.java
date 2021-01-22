@@ -9,10 +9,7 @@ import org.springframework.context.annotation.Import;
 import ru.otus.levina.hw05.domain.Author;
 import ru.otus.levina.hw05.domain.Book;
 import ru.otus.levina.hw05.domain.Genre;
-import ru.otus.levina.hw05.repository.AuthorDaoImpl;
-import ru.otus.levina.hw05.repository.BookDao;
-import ru.otus.levina.hw05.repository.BookDaoImpl;
-import ru.otus.levina.hw05.repository.GenreDaoImpl;
+import ru.otus.levina.hw05.repository.*;
 
 import java.util.List;
 
@@ -23,9 +20,13 @@ import static org.junit.jupiter.api.Assertions.*;
 @JdbcTest
 @Import({BookDaoImpl.class, AuthorDaoImpl.class, GenreDaoImpl.class})
 public class BookDaoTest {
-
+    @Autowired
+    private AuthorDao authorDao;
     @Autowired
     private BookDao bookDao;
+    @Autowired
+    private GenreDao genreDao;
+
     private static final Author expectedAuthor = new Author(1001, "Александр", "Пушкин", "Сергеевич");
     private static final Genre expectedGenre = new Genre(1002, "Русская классика");
 
@@ -47,10 +48,10 @@ public class BookDaoTest {
         assertNull(actualBook);
     }
 
-    @DisplayName("get books by page")
+    @DisplayName("list books")
     @Test
     void testBooksByPage() {
-         List<Book> expectedBooks = List.of(
+        List<Book> expectedBooks = List.of(
                 new Book(1003, "b1003",
                         List.of(
                                 new Author(1003, "a1003", null, null),
@@ -68,17 +69,19 @@ public class BookDaoTest {
                                 new Genre(1004, "g1004"))
                 ));
 
-        List<Book> actualBooks = bookDao.getByPage(2, 2);
+        List<Book> actualBooks = bookDao.list();
         actualBooks.forEach(b -> log.info("b: {}", b));
-        assertEquals(expectedBooks, actualBooks);
+        Book expectedBook = expectedBooks.get(1);
+        assertEquals(expectedBooks.stream().filter(b -> b.getId() == expectedBook.getId()).findFirst().get(), expectedBook);
     }
 
     @DisplayName("add a book")
     @Test
     void testAddBook() {
         Book expectedBook = new Book("b1", List.of(expectedAuthor), List.of(expectedGenre));
-        Long id = bookDao.insert(expectedBook).map(Book::getId).orElse(null);
-        assertNotNull(id);
+        bookDao.insert(expectedBook);
+        long id = expectedBook.getId();
+        assertTrue(id > 0);
         Book actualBook = bookDao.getById(id).orElse(null);
         log.info("testAddBook: {}", actualBook);
         assertEquals(expectedBook, actualBook);
@@ -95,8 +98,9 @@ public class BookDaoTest {
                 new Genre("g1"),
                 new Genre("g2"));
         Book expectedBook = new Book("b3", authors, genres);
-        Long id = bookDao.insert(expectedBook).map(Book::getId).orElse(null);
-        assertNotNull(id);
+        bookDao.insert(expectedBook);
+        long id = expectedBook.getId();
+        assertTrue(id > 0);
         Book actualBook = bookDao.getById(id).orElse(null);
         log.info("testJoins: {}", actualBook);
         assertEquals(expectedBook, actualBook);
@@ -112,8 +116,9 @@ public class BookDaoTest {
                 new Genre("g1"),
                 new Genre("g2"));
         Book origBook = new Book("b2", authors, genres);
-        Long id = bookDao.insert(origBook).map(Book::getId).orElse(null);
-        assertNotNull(id);
+        bookDao.insert(origBook);
+        long id = origBook.getId();
+        assertTrue(id > 0);
         Book actualBook = bookDao.getById(id).orElse(null);
         assertEquals(origBook, actualBook);
 
@@ -123,7 +128,6 @@ public class BookDaoTest {
 
         bookDao.update(origBook);
         actualBook = bookDao.getById(id).orElse(null);
-        System.out.println(actualBook);
         assertEquals(origBook, actualBook);
     }
 
@@ -137,25 +141,26 @@ public class BookDaoTest {
                 new Genre("g1"),
                 new Genre("g2"));
         Book expectedBook = new Book("b2", authors, genres);
-        Long id = bookDao.insert(expectedBook).map(Book::getId).orElse(null);
-        assertNotNull(id);
+        bookDao.insert(expectedBook);
+        long id = expectedBook.getId();
+        assertTrue(id > 0);
         Book actualBook = bookDao.getById(id).orElse(null);
         assertEquals(expectedBook, actualBook);
 
-        List<Author> authors1 = bookDao.getBookAuthors(id);
+        List<Author> authors1 = authorDao.getByBookId(id);
         assertEquals(authors, authors1);
 
-        List<Genre> genres1 = bookDao.getBookGenres(id);
+        List<Genre> genres1 = genreDao.getByBookId(id);
         assertEquals(genres, genres1);
 
         bookDao.delete(actualBook);
         actualBook = bookDao.getById(id).orElse(null);
         assertNull(actualBook);
 
-        List<Author> authors2 = bookDao.getBookAuthors(id);
+        List<Author> authors2 = authorDao.getByBookId(id);
         assertTrue(authors2.isEmpty());
 
-        List<Genre> genres2 = bookDao.getBookGenres(id);
+        List<Genre> genres2 = genreDao.getByBookId(id);
         assertTrue(genres2.isEmpty());
     }
 }

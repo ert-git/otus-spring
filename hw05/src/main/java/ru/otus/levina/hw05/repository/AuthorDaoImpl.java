@@ -33,7 +33,7 @@ public class AuthorDaoImpl implements AuthorDao {
 
     @Override
     public Optional<Author> getById(long id) {
-        Map<String, Object> params = Collections.singletonMap(ID, id);
+        Map<String, Object> params = Map.of(ID, id);
         try {
             return Optional.ofNullable(jdbc
                     .queryForObject("select id, first_name, last_name, middle_name from authors where id = :id", params, rowMapper));
@@ -49,7 +49,7 @@ public class AuthorDaoImpl implements AuthorDao {
     }
 
     @Override
-    public Optional<Author> insert(Author author) {
+    public void insert(Author author) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue(FIRST_NAME, author.getFirstName())
@@ -59,12 +59,11 @@ public class AuthorDaoImpl implements AuthorDao {
                 .update("insert into authors (first_name, last_name, middle_name) values (:first_name, :last_name, :middle_name)", params, keyHolder);
         Long id = (Long) keyHolder.getKey();
         author.setId(id);
-        return getById(id);
     }
 
     @Override
     public void delete(Author author) {
-        jdbc.update("delete from authors where id = :id", Collections.singletonMap(ID, author.getId()));
+        jdbc.update("delete from authors where id = :id", Map.of(ID, author.getId()));
     }
 
     @Override
@@ -91,17 +90,4 @@ public class AuthorDaoImpl implements AuthorDao {
         return jdbc.query("select a.id as id, first_name, last_name, middle_name from authors a join book_author on a.id = author_id where book_id = :bookId", params, rowMapper);
     }
 
-    @Override
-    public  Map<Long, List<Author>> getByBookIdList(List<Long> bookIds) {
-        log.debug("getByBookIdList: bookIds={}", bookIds);
-        SqlParameterSource params = new MapSqlParameterSource("idList", bookIds);
-        Map<Long, List<Author>> plainResult = new HashMap<>();
-        jdbc.query("select a.id as id, first_name, last_name, middle_name, book_id from authors a join book_author on a.id = author_id where book_id in (:idList)", params, rs -> {
-            Author author = rowMapper.mapRow(rs, 0);
-            long bookId = rs.getLong("book_id");
-            plainResult.putIfAbsent(bookId, new ArrayList<>());
-            plainResult.get(bookId).add(author);
-        });
-        return plainResult;
-    }
 }

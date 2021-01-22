@@ -32,7 +32,7 @@ public class GenreDaoImpl implements GenreDao {
     @Override
     public Optional<Genre> getById(long id) {
         try {
-            return Optional.ofNullable(jdbc.queryForObject("select id, name, from genres where id = :id", Collections.singletonMap(ID, id), rowMapper));
+            return Optional.ofNullable(jdbc.queryForObject("select id, name, from genres where id = :id", Map.of(ID, id), rowMapper));
         } catch (EmptyResultDataAccessException e) {
             log.debug("getById: {} for id={}", e, id);
             return Optional.empty();
@@ -45,7 +45,7 @@ public class GenreDaoImpl implements GenreDao {
     }
 
     @Override
-    public Optional<Genre> insert(Genre genre) {
+    public void insert(Genre genre) {
         log.info("insert: genre={}", genre);
         SqlParameterSource namedParameters = new MapSqlParameterSource()
                 .addValue(NAME, genre.getName());
@@ -54,12 +54,11 @@ public class GenreDaoImpl implements GenreDao {
         Long id = (Long) keyHolder.getKey();
         genre.setId(id);
         log.info("insert: inserted genre={}", genre);
-        return getById(id);
     }
 
     @Override
     public void delete(Genre genre) {
-        jdbc.update("delete from genres where id = :id", Collections.singletonMap(ID, genre.getId()));
+        jdbc.update("delete from genres where id = :id", Map.of(ID, genre.getId()));
     }
 
     @Override
@@ -82,20 +81,6 @@ public class GenreDaoImpl implements GenreDao {
         log.debug("getByBookId: bookId={}", bookId);
         SqlParameterSource params = new MapSqlParameterSource("bookId", bookId);
         return jdbc.query("select g.id as id, name from genres g join book_genre on g.id = genre_id where book_id = :bookId", params, rowMapper);
-    }
-
-    @Override
-    public  Map<Long, List<Genre>> getByBookIdList(List<Long> bookIds) {
-        log.debug("getByBookIdList: bookIds={}", bookIds);
-        SqlParameterSource params = new MapSqlParameterSource("idList", bookIds);
-        Map<Long, List<Genre>> plainResult = new HashMap<>();
-        jdbc.query("select a.id as id, name, book_id from genres a join book_genre on a.id = genre_id where book_id in (:idList)", params, rs -> {
-            Genre author = rowMapper.mapRow(rs, 0);
-            long bookId = rs.getLong("book_id");
-            plainResult.putIfAbsent(bookId, new ArrayList<>());
-            plainResult.get(bookId).add(author);
-        });
-        return plainResult;
     }
 
 }

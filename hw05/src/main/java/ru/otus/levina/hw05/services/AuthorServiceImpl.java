@@ -16,7 +16,9 @@ public class AuthorServiceImpl implements AuthorService {
 
     @Override
     public Optional<Author> insert(String firstName, String lastName, String middleName) {
-        return authorDao.insert(new Author(firstName, lastName, middleName));
+        Author author = new Author(firstName, lastName, middleName);
+        authorDao.insert(author);
+        return Optional.ofNullable(author);
     }
 
     @Override

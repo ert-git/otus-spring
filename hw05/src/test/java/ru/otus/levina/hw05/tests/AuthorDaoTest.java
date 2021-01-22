@@ -10,7 +10,7 @@ import ru.otus.levina.hw05.domain.Author;
 import ru.otus.levina.hw05.repository.AuthorDao;
 import ru.otus.levina.hw05.repository.AuthorDaoImpl;
 
-import java.util.*;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -77,28 +77,13 @@ public class AuthorDaoTest {
     }
 
 
-    @DisplayName("get authors by book id list")
-    @Test
-    void testGetAuthorsByBookIdList() {
-        List<Long> bookIds = List.of(1003L, 1004L, 1005L);
-        Map<Long, List<Author>> actualAuthors = authorDao.getByBookIdList(bookIds);
-        actualAuthors.entrySet().forEach(e -> log.info("entry: {}", e));
-        Map<Long, List<Author>> expectedAuthors = new HashMap<>();
-        bookIds.forEach(id -> expectedAuthors.putIfAbsent(id, new ArrayList<>()));
-        expectedAuthors.get(1003L).add(new Author(1003, "a1003", null, null));
-        expectedAuthors.get(1003L).add(new Author(1004, "a1004", null, null));
-        expectedAuthors.get(1004L).add(new Author(1004, "a1004", null, null));
-        expectedAuthors.get(1004L).add(new Author(1005, "a1005", null, null));
-        expectedAuthors.get(1005L).add(new Author(1003, "a1003", null, null));
-        assertEquals(expectedAuthors, actualAuthors);
-    }
-
     @DisplayName("add an author")
     @Test
     void testAddAuthor() {
         Author expectedAuthor = new Author("Fn1", "Ln1", "Mn1");
-        Long id = authorDao.insert(expectedAuthor).map(Author::getId).orElse(null);
-        assertNotNull(id);
+        authorDao.insert(expectedAuthor);
+        long id = expectedAuthor.getId();
+        assertTrue(id > 0);
         Author actualAuthor = authorDao.getById(id).orElse(null);
         assertEquals(expectedAuthor, actualAuthor);
     }
@@ -107,8 +92,9 @@ public class AuthorDaoTest {
     @Test
     void testDeleteAuthor() {
         Author expectedAuthor = new Author("Fn2", "Ln2", "Mn2");
-        Long id = authorDao.insert(expectedAuthor).map(Author::getId).orElse(null);
-        assertNotNull(id);
+        authorDao.insert(expectedAuthor);
+        long id = expectedAuthor.getId();
+        assertTrue(id > 0);
         Author actualAuthor = authorDao.getById(id).orElse(null);
         assertEquals(expectedAuthor, actualAuthor);
         authorDao.delete(actualAuthor);
@@ -120,8 +106,9 @@ public class AuthorDaoTest {
     @Test
     void testUpdateAuthor() {
         Author origAuthor = new Author("Fn3", "Ln3", "Mn3");
-        Long id = authorDao.insert(origAuthor).map(Author::getId).orElse(null);
-        assertNotNull(id);
+        authorDao.insert(origAuthor);
+        long id = origAuthor.getId();
+        assertTrue(id > 0);
         Author actualAuthor = authorDao.getById(id).orElse(null);
         assertEquals(origAuthor, actualAuthor);
 

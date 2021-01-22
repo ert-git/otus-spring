@@ -13,13 +13,10 @@ public interface BookDao {
 
     void delete(Book book);
 
-    List<Book> getByPage(int startRowNum, int countRows);
+    List<Book> list();
 
-    Optional<Book> insert(Book book);
+    void insert(Book book);
 
     void update(Book book);
 
-    List<Author> getBookAuthors(long bookId);
-
-    List<Genre> getBookGenres(long bookId);
 }

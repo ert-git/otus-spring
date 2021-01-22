@@ -18,6 +18,7 @@ import ru.otus.levina.hw05.domain.Genre;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 @Slf4j
 @RequiredArgsConstructor
 @Repository
@@ -40,7 +41,7 @@ public class BookDaoImpl implements BookDao {
     public Optional<Book> getById(long id) {
         try {
             Optional<Book> result = Optional.ofNullable(jdbc
-                    .queryForObject("select id, title from books where id = :bookId", Collections.singletonMap(BOOK_ID, id), rowMapper));
+                    .queryForObject("select id, title from books where id = :bookId", Map.of(BOOK_ID, id), rowMapper));
             result
                     .ifPresent(book -> {
                         book.setAuthors(authorDao.getByBookId(id));
@@ -54,7 +55,7 @@ public class BookDaoImpl implements BookDao {
     }
 
     @Override
-    public List<Book> getByPage(int startRowNum, int rowCount) {
+    public List<Book> list() {
         // В общем случае реализация будет зависит оттого, у кого больше ресурсов (у базы или у явы), и зачем нам вообще такой метод.
         // Если это какой-то каталог, то он будет выводить книги постранично или группами по автору/жанру и т.п.
         // Но точно не все, что есть в базе.
@@ -62,13 +63,11 @@ public class BookDaoImpl implements BookDao {
         // Тогда сможем выдернуть книги (вместе с жанрами и авторами) и за один запрос.
         // Конечно, один мегазапрос со всеми join можно сделать и здесь, но тогда порушится вся концепция деления на репозитории.
         // Оптимальным вариантом видится нечто среднее.
-        SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("startRowNum", startRowNum)
-                .addValue("rowCount", rowCount);
-        List<Book> books = jdbc.query("select id, title from books limit :startRowNum, :rowCount", params, rowMapper);
+        SqlParameterSource params = new MapSqlParameterSource();
+        List<Book> books = jdbc.query("select id, title from books", params, rowMapper);
         List<Long> bookIds = books.stream().map(Book::getId).collect(Collectors.toList());
-        Map<Long, List<Author>> authors = authorDao.getByBookIdList(bookIds);
-        Map<Long, List<Genre>> genres = genreDao.getByBookIdList(bookIds);
+        Map<Long, List<Author>> authors = getAuthorsByBookIdList(bookIds);
+        Map<Long, List<Genre>> genres = getGenresByBookIdList(bookIds);
         books.forEach(b -> {
             b.setAuthors(authors.getOrDefault(b.getId(), Collections.EMPTY_LIST));
             b.setGenres(genres.getOrDefault(b.getId(), Collections.EMPTY_LIST));
@@ -100,7 +99,7 @@ public class BookDaoImpl implements BookDao {
     }
 
     @Override
-    public Optional<Book> insert(Book book) {
+    public void insert(Book book) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SqlParameterSource namedParameters = new MapSqlParameterSource()
                 .addValue(TITLE, book.getTitle());
@@ -114,7 +113,6 @@ public class BookDaoImpl implements BookDao {
         book.getGenres().stream().filter(a -> a.getId() == 0).forEach(genreDao::insert);
         joinGenresToBook(book.getId(), book.getGenres().stream().map(Genre::getId).collect(Collectors.toList()));
 
-        return getById(book.getId());
     }
 
 
@@ -122,7 +120,7 @@ public class BookDaoImpl implements BookDao {
     public void delete(Book book) {
         deleteAuthorsJoin(book.getId(), book.getAuthors().stream().map(Author::getId).collect(Collectors.toList()));
         deleteGenresJoin(book.getId(), book.getGenres().stream().map(Genre::getId).collect(Collectors.toList()));
-        jdbc.update("delete from books where id = :bookId", Collections.singletonMap(BOOK_ID, book.getId()));
+        jdbc.update("delete from books where id = :bookId", Map.of(BOOK_ID, book.getId()));
     }
 
     private void deleteGenresJoin(long bookId, List<Long> genreIds) {
@@ -141,28 +139,68 @@ public class BookDaoImpl implements BookDao {
 
     @Override
     public void update(Book book) {
-        Book oldBook = getById(book.getId()).get();
+
         Map<String, Object> params = new HashMap<>();
         params.put(TITLE, book.getTitle());
         params.put(BOOK_ID, book.getId());
         jdbc.update("update books set title =:title where id=:bookId", params);
         book.getAuthors().stream().filter(a -> a.getId() == 0).forEach(authorDao::insert);
         book.getGenres().stream().filter(a -> a.getId() == 0).forEach(genreDao::insert);
-        joinAuthorsToBook(book.getId(),  book.getAuthors().stream().filter(newAuthor -> !oldBook.getAuthors().contains(newAuthor)).map(Author::getId).collect(Collectors.toList()));
-        joinGenresToBook(book.getId(),  book.getGenres().stream().filter(newGenre -> !oldBook.getGenres().contains(newGenre)).map(Genre::getId).collect(Collectors.toList()));
-        deleteAuthorsJoin(book.getId(), oldBook.getAuthors().stream().filter(oldAuthor -> !book.getAuthors().contains(oldAuthor)).map(Author::getId).collect(Collectors.toList()));
-        deleteGenresJoin(book.getId(), oldBook.getGenres().stream().filter(oldGenre -> !book.getGenres().contains(oldGenre)).map(Genre::getId).collect(Collectors.toList()));
+
+        List<Long> actualAuthorIds = book.getAuthors().stream().map(Author::getId).collect(Collectors.toList());
+        List<Long> existedAuthorIds = getAuthorsIdByBookId(book.getId());
+        deleteAuthorsJoin(book.getId(), existedAuthorIds.stream().filter(existedId -> !actualAuthorIds.contains(existedId)).collect(Collectors.toList()));
+        // insert new ids only
+        joinAuthorsToBook(book.getId(), actualAuthorIds.stream().filter(oldId -> !existedAuthorIds.contains(oldId)).collect(Collectors.toList()));
+
+        List<Long> existedGenreIds = getGenresIdByBookId(book.getId());
+        List<Long> actualGenreIds = book.getGenres().stream().map(Genre::getId).collect(Collectors.toList());
+        deleteGenresJoin(book.getId(),  existedGenreIds.stream().filter(existedId -> !actualGenreIds.contains(existedId)).collect(Collectors.toList()));
+        // insert new ids only
+        joinGenresToBook(book.getId(), actualGenreIds.stream().filter(newId -> !existedGenreIds.contains(newId)).collect(Collectors.toList()));
+
     }
 
 
-    @Override
-    public List<Author> getBookAuthors(long bookId) {
-        return authorDao.getByIdList(jdbc.queryForList("select author_id from book_author where book_id = :bookId", Collections.singletonMap(BOOK_ID, bookId), Long.class));
+    private Map<Long, List<Author>> getAuthorsByBookIdList(List<Long> bookIds) {
+        log.debug("getByBookIdList: getAuthorsByBookIdList={}", bookIds);
+        RowMapper<Author> rowMapper =
+                (rs, rowNum) -> new Author(rs.getLong("id"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("middle_name"));
+        SqlParameterSource params = new MapSqlParameterSource("idList", bookIds);
+        Map<Long, List<Author>> plainResult = new HashMap<>();
+        jdbc.query("select a.id as id, first_name, last_name, middle_name, book_id from authors a join book_author on a.id = author_id where book_id in (:idList)", params, rs -> {
+            Author author = rowMapper.mapRow(rs, 0);
+            long bookId = rs.getLong("book_id");
+            plainResult.putIfAbsent(bookId, new ArrayList<>());
+            plainResult.get(bookId).add(author);
+        });
+        return plainResult;
     }
 
-    @Override
-    public List<Genre> getBookGenres(long bookId) {
-        return genreDao.getByIdList(jdbc.queryForList("select genre_id from book_genre where book_id = :bookId", Collections.singletonMap(BOOK_ID, bookId), Long.class));
+    private Map<Long, List<Genre>> getGenresByBookIdList(List<Long> bookIds) {
+        log.debug("getGenresByBookIdList: bookIds={}", bookIds);
+        RowMapper<Genre> rowMapper =
+                (rs, rowNum) -> new Genre(rs.getLong("id"),
+                        rs.getString("name"));
+        SqlParameterSource params = new MapSqlParameterSource("idList", bookIds);
+        Map<Long, List<Genre>> plainResult = new HashMap<>();
+        jdbc.query("select a.id as id, name, book_id from genres a join book_genre on a.id = genre_id where book_id in (:idList)", params, rs -> {
+            Genre author = rowMapper.mapRow(rs, 0);
+            long bookId = rs.getLong("book_id");
+            plainResult.putIfAbsent(bookId, new ArrayList<>());
+            plainResult.get(bookId).add(author);
+        });
+        return plainResult;
     }
 
+    private List<Long> getGenresIdByBookId(long bookId) {
+        return jdbc.queryForList("select genre_id from book_genre a where book_id = :bookId", Map.of("bookId", bookId), Long.class);
+    }
+
+    private List<Long> getAuthorsIdByBookId(long bookId) {
+        return jdbc.queryForList("select author_id from book_author a where book_id = :bookId", Map.of("bookId", bookId), Long.class);
+    }
 }

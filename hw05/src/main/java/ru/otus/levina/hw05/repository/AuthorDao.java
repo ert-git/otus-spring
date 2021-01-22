@@ -12,7 +12,7 @@ public interface AuthorDao {
 
     List<Author> getAll();
 
-    Optional<Author> insert(Author author);
+    void insert(Author author);
 
     void delete(Author author);
 
@@ -22,5 +22,4 @@ public interface AuthorDao {
 
     List<Author> getByBookId(long bookId);
 
-    Map<Long, List<Author>> getByBookIdList(List<Long> bookIds);
 }

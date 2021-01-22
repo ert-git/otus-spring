@@ -80,8 +80,9 @@ public class GenreDaoTest {
     @Test
     void testAddGenre() {
         Genre expectedgenre = new Genre("G1");
-        Long id = genreDao.insert(expectedgenre).map(Genre::getId).orElse(null);
-        assertNotNull(id);
+        genreDao.insert(expectedgenre);
+        long id = expectedgenre.getId();
+        assertTrue(id > 0);
         Genre actualgenre = genreDao.getById(id).orElse(null);
         assertEquals(expectedgenre, actualgenre);
         genreDao.delete(actualgenre);
@@ -91,8 +92,9 @@ public class GenreDaoTest {
     @Test
     void testDeleteGenre() {
         Genre expectedgenre = new Genre("G2");
-        Long id = genreDao.insert(expectedgenre).map(Genre::getId).orElse(null);
-        assertNotNull(id);
+        genreDao.insert(expectedgenre);
+        long id = expectedgenre.getId();
+        assertTrue(id > 0);
         Genre actualgenre = genreDao.getById(id).orElse(null);
         assertEquals(expectedgenre, actualgenre);
         genreDao.delete(actualgenre);
@@ -104,8 +106,9 @@ public class GenreDaoTest {
     @Test
     void testUpdateGenre() {
         Genre origgenre = new Genre("G3");
-        Long id = genreDao.insert(origgenre).map(Genre::getId).orElse(null);
-        assertNotNull(id);
+        genreDao.insert(origgenre);
+        long id = origgenre.getId();
+        assertTrue(id > 0);
         Genre actualgenre = genreDao.getById(id).orElse(null);
         assertEquals(origgenre, actualgenre);
 

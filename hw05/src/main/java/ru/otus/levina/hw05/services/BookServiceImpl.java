@@ -24,7 +24,9 @@ public class BookServiceImpl implements BookService {
     public Optional<Book> insert(String title, long authorId, long genreId) {
         Author author = authorDao.getById(authorId).orElseThrow();
         Genre genre = genreDao.getById(genreId).orElseThrow();
-        return bookDao.insert(new Book(title, Collections.singletonList(author), Collections.singletonList(genre)));
+        Book book = new Book(title, Collections.singletonList(author), Collections.singletonList(genre));
+        bookDao.insert(book);
+        return Optional.ofNullable(book);
     }
 
 

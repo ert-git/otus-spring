@@ -3,6 +3,7 @@ package ru.otus.levina.hw05.services;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.otus.levina.hw05.domain.Author;
 import ru.otus.levina.hw05.domain.Genre;
 import ru.otus.levina.hw05.repository.GenreDao;
 
@@ -18,8 +19,9 @@ public class GenreServiceImpl implements GenreService {
 
     @Override
     public Optional<Genre> insert(String name) {
-        log.info("insert: name={}", name);
-        return genreDao.insert(new Genre(name));
+        Genre genre = new Genre(name);
+        genreDao.insert(genre);
+        return Optional.ofNullable(genre);
     }
 
     @Override
