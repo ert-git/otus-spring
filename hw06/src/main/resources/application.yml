@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    initialization-mode: always
+    data: data.sql
+    driver-class-name: org.h2.Driver
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    show-sql: true
