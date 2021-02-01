@@ -1,12 +1,3 @@
-#spring:
-#  shell:
-#    interactive:
-#      enabled: false
-#  datasource:
-#    data: test_db_data.sql
-#    driver-class-name: org.h2.Driver
-#    initialization-mode: always
-#
 spring:
   shell:
     interactive:
