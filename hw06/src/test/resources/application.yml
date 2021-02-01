@@ -1,0 +1,22 @@
+#spring:
+#  shell:
+#    interactive:
+#      enabled: false
+#  datasource:
+#    data: test_db_data.sql
+#    driver-class-name: org.h2.Driver
+#    initialization-mode: always
+#
+spring:
+  shell:
+    interactive:
+      enabled: false
+  datasource:
+    initialization-mode: always
+    data: test_db_data.sql
+    driver-class-name: org.h2.Driver
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    show-sql: true
